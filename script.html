@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loi Binomiale et P(X ≥ x)</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Visualisation d'une loi binomiale et de P(X ≥ x)</h1>
+
+    <label for="n-slider">Paramètre n (nombre de répétitions) :</label>
+    <input type="range" id="n-slider" min="1" max="50" value="10" step="1">
+    <span id="n-value">10</span>
+
+    <br><br>
+
+    <label for="p-slider">Paramètre p (probabilité de succès) :</label>
+    <input type="range" id="p-slider" min="0.01" max="0.99" value="0.5" step="0.01">
+    <span id="p-value">0.50</span>
+
+    <br><br>
+
+    <div id="graph"></div>
+
+    <script>
+        function binomialPMF(n, p, x) {
+            function factorial(k) {
+                if (k === 0 || k === 1) return 1;
+                return k * factorial(k - 1);
+            }
+            return factorial(n) / (factorial(x) * factorial(n - x)) * Math.pow(p, x) * Math.pow(1 - p, n - x);
+        }
+
+        function binomialCDF(n, p, x) {
+            let cumulative = 0;
+            for (let i = 0; i <= x; i++) {
+                cumulative += binomialPMF(n, p, i);
+            }
+            return cumulative;
+        }
+
+        function plotGraph(n, p) {
+            let x = Array.from({ length: n + 1 }, (_, i) => i);
+            let pmf = x.map(xi => binomialPMF(n, p, xi));
+            let complementary = x.map(xi => 1 - binomialCDF(n, p, xi - 1));
+
+            let pmfTrace = {
+                x: x,
+                y: pmf,
+                type: 'bar',
+                name: 'P(X = x)',
+                marker: { color: 'blue' },
+                opacity: 0.7
+            };
+
+            let complementaryTrace = {
+                x: x,
+                y: complementary,
+                mode: 'lines+markers',
+                name: 'P(X ≥ x)',
+                line: { color: 'red' },
+                marker: { size: 6 }
+            };
+
+            let layout = {
+                title: `Loi Binomiale et P(X ≥ x) (n=${n}, p=${p.toFixed(2)})`,
+                xaxis: { title: 'x', dtick: 1 },
+                yaxis: { title: 'Probabilité', range: [0, 1] },
+                barmode: 'overlay'
+            };
+
+            Plotly.newPlot('graph', [pmfTrace, complementaryTrace], layout);
+        }
+
+        document.getElementById('n-slider').addEventListener('input', function () {
+            let n = parseInt(this.value);
+            let p = parseFloat(document.getElementById('p-slider').value);
+            document.getElementById('n-value').innerText = n;
+            plotGraph(n, p);
+        });
+
+        document.getElementById('p-slider').addEventListener('input', function () {
+            let p = parseFloat(this.value);
+            let n = parseInt(document.getElementById('n-slider').value);
+            document.getElementById('p-value').innerText = p.toFixed(2);
+            plotGraph(n, p);
+        });
+
+        // Initial plot
+        plotGraph(10, 0.5);
+    </script>
+</body>
+</html>
